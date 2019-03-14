@@ -7,14 +7,15 @@ import Expect
 import Set
 
 import Grid exposing (Grid)
-import Model exposing (Piece(..), Board, GameState, initGameState)
-import Update exposing (Winner(..), allMoves, winner)
+import Model exposing (Piece(..), Winner(..),
+                       Board, GameState, initGameState)
+import Update exposing (allMoves, winner)
 
 -- Test the game logic
 
 buildState : Piece -> Board -> GameState
 buildState currentPlayer board  =
-    {board=board, currentPlayer=currentPlayer}
+    {board=board, currentPlayer=currentPlayer, winner=Nothing}
 
 intsToBoard : Grid Int -> Grid (Maybe Piece)
 intsToBoard ig =
