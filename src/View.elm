@@ -12,7 +12,6 @@ import Html exposing (Html, article, span, section, text, div, h1, img, p)
 import Html.Attributes exposing (class, classList, style, src)
 import Html.Events exposing (onClick)
 import Set exposing (Set)
-import Svg.Attributes
 import Update exposing (Msg(..), countPieces, init, update)
 
 type alias MovesSet = Set Position
@@ -75,9 +74,9 @@ agentStatusView model player pieceCount =
     in
     let role =
             if isHuman then
-                "(Human)"
+                " (Human)"
             else
-                "(AI)"
+                " (AI)"
     in
     let (humanClass, aiClass) = if isHuman then
                          ("agent-icon-active", "agent-icon-inactive")
@@ -85,24 +84,24 @@ agentStatusView model player pieceCount =
                          ("agent-icon-inactive", "agent-icon-active")
     in
         p [ classList [("agent", True)] ]
-            [ div [ classList [("agent-icons", True)] {-onClick Decrement-} ]
-                  [ FontAwesome.Icon.viewStyled
-                        [Svg.Attributes.class "agent-icon"
-                        , Svg.Attributes.class aiClass]
-                        FontAwesome.Solid.robot
-                  , FontAwesome.Icon.viewStyled
-                      [Svg.Attributes.class "agent-icon"
-                      , Svg.Attributes.class humanClass]
-                      FontAwesome.Solid.user ],
-                  text <| name ++ role
-                  ++ " Score: " ++ (String.fromInt pieceCount) ]
-    
+            [div [
+              classList [("agent-icon", True),
+                             (aiClass, True)]
+             , onClick (ChangeAgent player AIAgent) ]
+                 [ FontAwesome.Icon.view FontAwesome.Solid.robot ]
+            ,div [onClick (ChangeAgent player HumanAgent)
+                 , classList [("agent-icon", True),
+                                  (humanClass, True)] ]
+                 [ FontAwesome.Icon.view FontAwesome.Solid.user ]
+            , text <| name ++ role ++ " Score: "
+                ++ (String.fromInt pieceCount)]
+
 
 scoresView: Model -> Html Msg
 scoresView model =
     let (whiteCount, blackCount) = countPieces model.gameState.board in
     article []
-        [ 
+        [
           agentStatusView model BlackPiece blackCount,
           agentStatusView model WhitePiece whiteCount
         ]

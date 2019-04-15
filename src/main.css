@@ -65,14 +65,9 @@ The board
     justify-content: center;
 }
 
-.agent-icons {
-    height: 40px;
-    width: 80px;
-    display: flex;
-}
-
 .agent-icon {
     margin: 5px;
+    width: 40px;
 }
 
 .agent-icon-inactive {

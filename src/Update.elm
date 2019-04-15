@@ -5,8 +5,11 @@ import Model exposing (Agent(..), Model, Board, Move, GameState,
                            Position, Winner(..), initGameState, Piece(..))
 import Grid
 
+type alias Player = Piece
+
 type Msg
     = MoveMsg Move -- Player move
+    | ChangeAgent Player Agent -- (Change agent of a player)
 
 
 init : ( Model, Cmd Msg )
@@ -17,7 +20,7 @@ init =
       , whiteAgent=AIAgent }
       ,  Cmd.none )
 
-nextPlayer : Piece -> Piece
+nextPlayer : Player -> Player
 nextPlayer player =
     case player of
         WhitePiece -> BlackPiece
@@ -32,11 +35,11 @@ flipPlayer state =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    let state = model.gameState in
-    let board = state.board
-        player = state.currentPlayer in
     case msg of
         MoveMsg (x,y) ->
+            let state = model.gameState in
+            let board = state.board
+                player = state.currentPlayer in
             let pieceToFlip = getSandwiches (x,y) state
                             |> List.concat in
             let newBoard = List.foldl
@@ -62,7 +65,10 @@ update msg model =
                     let nextModel = {model | gameState=newState
                            , potentialMoves=newMoves} in
                     ( nextModel, Cmd.none )
-                   
+        ChangeAgent player agent ->
+            case player of
+                BlackPiece -> ( { model | blackAgent=agent}, Cmd.none )
+                WhitePiece -> ( { model | whiteAgent=agent}, Cmd.none )
 
 {-
 Given a board, returns (whiteCount, blackCount)
@@ -75,7 +81,7 @@ countPieces board =
                                   Just BlackPiece -> (w, b+1)
                                   Just WhitePiece -> (w+1, b)
                         ) (0,0) board
-                
+
 {-
 Gets the winner of the current board configuration.
 Precondition: the game should end already
@@ -144,7 +150,7 @@ getSandwiches pos state =
                 [] -> Nothing
                 _ -> Just sandwich
        )
-           
+
 
 addDirection : Position -> Direction -> Position
 addDirection (x, y) (Direction(dx, dy)) =
@@ -160,7 +166,7 @@ directions =
     [(-1, -1), (0, -1), (1, -1), (-1, 0),
          (1, 0), (-1, 1), (0, 1), (1, 1)]
         |> List.map Direction
-        
+
 neighbors : Position -> Board -> List Position
 neighbors pos board =
     List.map (\dir -> addDirection pos dir) directions
@@ -168,4 +174,3 @@ neighbors pos board =
                             newX >= 0 && newY >= 0
                             && newX <= (Grid.width board)
                             && newY <= (Grid.height board))
-
