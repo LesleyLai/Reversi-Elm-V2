@@ -87,9 +87,9 @@ agentStatusView model player pieceCount =
             [div [
               classList [("agent-icon", True),
                              (aiClass, True)]
-             , onClick (ChangeAgent player AIAgent) ]
+             , onClick (ChangeAgentMsg player AIAgent) ]
                  [ FontAwesome.Icon.view FontAwesome.Solid.robot ]
-            ,div [onClick (ChangeAgent player HumanAgent)
+            ,div [onClick (ChangeAgentMsg player HumanAgent)
                  , classList [("agent-icon", True),
                                   (humanClass, True)] ]
                  [ FontAwesome.Icon.view FontAwesome.Solid.user ]

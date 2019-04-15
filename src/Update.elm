@@ -9,7 +9,7 @@ type alias Player = Piece
 
 type Msg
     = MoveMsg Move -- Player move
-    | ChangeAgent Player Agent -- (Change agent of a player)
+    | ChangeAgentMsg Player Agent -- (Change agent of a player)
 
 
 init : ( Model, Cmd Msg )
@@ -33,11 +33,18 @@ flipPlayer : GameState -> GameState
 flipPlayer state =
     {state | currentPlayer=(nextPlayer state.currentPlayer)}
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        MoveMsg (x,y) ->
-            let state = model.gameState in
+isHuman : Player -> Model -> Bool
+isHuman player model =
+    case player of
+        WhitePiece -> model.whiteAgent == HumanAgent
+        BlackPiece -> model.blackAgent == HumanAgent
+
+{-
+Let the board move
+-}
+move : (Int, Int) -> Model -> Model
+move (x, y) model =
+    let state = model.gameState in
             let board = state.board
                 player = state.currentPlayer in
             let pieceToFlip = getSandwiches (x,y) state
@@ -56,19 +63,41 @@ update msg model =
                    let flippedState = flipPlayer newState in
                    let flippedMoves = allMoves flippedState in
                    case flippedMoves of
-                       [] -> ({model |
+                       [] -> {model |
                               gameState={newState | winner=Just (winner newState)}
-                            , potentialMoves=[]}, Cmd.none)
-                       _ -> ({model | gameState=flippedState,
-                              potentialMoves=flippedMoves} , Cmd.none )
+                            , potentialMoves=[]}
+                       _ -> {model | gameState=flippedState,
+                              potentialMoves=flippedMoves}
                _ ->
-                    let nextModel = {model | gameState=newState
-                           , potentialMoves=newMoves} in
-                    ( nextModel, Cmd.none )
-        ChangeAgent player agent ->
-            case player of
-                BlackPiece -> ( { model | blackAgent=agent}, Cmd.none )
-                WhitePiece -> ( { model | whiteAgent=agent}, Cmd.none )
+                    {model | gameState=newState, potentialMoves=newMoves}
+
+{-
+Let the AI move if the current player is AI, otherwise returns the current model
+-}
+tryMoveAI : Model -> Model
+tryMoveAI model =
+    if (isHuman model.gameState.currentPlayer model) then
+        model
+    else
+        case model.potentialMoves of
+            [] -> model
+            head :: tail ->
+                let newModel = move head model in
+                tryMoveAI newModel
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        MoveMsg (x,y) ->
+            let newModel = move (x, y) model in
+            ( tryMoveAI newModel, Cmd.none )
+        ChangeAgentMsg player agent ->
+            let newModel =
+                    case player of
+                        BlackPiece -> { model | blackAgent=agent}
+                        WhitePiece -> { model | whiteAgent=agent}
+            in
+                (tryMoveAI newModel, Cmd.none )
 
 {-
 Given a board, returns (whiteCount, blackCount)
