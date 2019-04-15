@@ -97,7 +97,7 @@ update msg model =
                         BlackPiece -> { model | blackAgent=agent}
                         WhitePiece -> { model | whiteAgent=agent}
             in
-                (tryMoveAI newModel, Cmd.none )
+                ( tryMoveAI newModel, Cmd.none )
 
 {-
 Given a board, returns (whiteCount, blackCount)

@@ -8,7 +8,8 @@ import FontAwesome.Solid
 
 import Array exposing (Array)
 import Grid
-import Html exposing (Html, article, span, section, text, div, h1, img, p)
+import Html exposing (Html, article, button,
+                          span, section, text, div, h1, img, p)
 import Html.Attributes exposing (class, classList, style, src)
 import Html.Events exposing (onClick)
 import Set exposing (Set)
@@ -103,7 +104,8 @@ scoresView model =
     article []
         [
           agentStatusView model BlackPiece blackCount,
-          agentStatusView model WhitePiece whiteCount
+          agentStatusView model WhitePiece whiteCount,
+          button [] [ text <| "Restart" ]
         ]
 
 
