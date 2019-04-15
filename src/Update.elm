@@ -1,8 +1,8 @@
 module Update exposing (Msg(..), countPieces, init,  update, allMoves,
                             winner)
 
-import Model exposing (Model, Board, Move, GameState, Position, Winner(..), 
-                           initGameState, Piece(..))
+import Model exposing (Agent(..), Model, Board, Move, GameState,
+                           Position, Winner(..), initGameState, Piece(..))
 import Grid
 
 type Msg
@@ -12,8 +12,10 @@ type Msg
 init : ( Model, Cmd Msg )
 init =
     ( { gameState=initGameState
-      , potentialMoves=(allMoves initGameState) },
-        Cmd.none )
+      , potentialMoves=(allMoves initGameState)
+      , blackAgent=HumanAgent
+      , whiteAgent=AIAgent }
+      ,  Cmd.none )
 
 nextPlayer : Piece -> Piece
 nextPlayer player =
@@ -51,12 +53,13 @@ update msg model =
                    let flippedState = flipPlayer newState in
                    let flippedMoves = allMoves flippedState in
                    case flippedMoves of
-                       [] -> ({gameState={newState | winner=Just (winner newState)}
+                       [] -> ({model |
+                              gameState={newState | winner=Just (winner newState)}
                             , potentialMoves=[]}, Cmd.none)
-                       _ -> ({gameState=flippedState,
+                       _ -> ({model | gameState=flippedState,
                               potentialMoves=flippedMoves} , Cmd.none )
                _ ->
-                    let nextModel = {gameState=newState
+                    let nextModel = {model | gameState=newState
                            , potentialMoves=newMoves} in
                     ( nextModel, Cmd.none )
                    

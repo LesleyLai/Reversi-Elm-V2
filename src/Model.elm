@@ -1,4 +1,4 @@
-module Model exposing (Piece(..), Position, Winner(..),
+module Model exposing (Piece(..), Agent(..), Position, Winner(..),
                            Cell, Board, Row, Model, Move, GameState,
                            initGameState)
 
@@ -14,6 +14,8 @@ type alias Row = Array Cell
 type alias Position = (Int, Int)
 type alias Move = Position
 
+type Agent = HumanAgent | AIAgent
+
 type Winner = BlackWin | WhiteWin | Tie
 
 type alias GameState
@@ -27,6 +29,8 @@ type alias Model =
     {
         gameState: GameState
       , potentialMoves: List Move
+      , blackAgent: Agent
+      , whiteAgent: Agent
     }
 
 initBoard : Board

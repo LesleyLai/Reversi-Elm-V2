@@ -1,6 +1,6 @@
 module View exposing (view)
 
-import Model exposing (GameState, Piece(..), Position, Winner(..),
+import Model exposing (Agent(..), GameState, Piece(..), Position, Winner(..),
                            Cell, Board, Row, Model, Move)
 
 import FontAwesome.Icon
@@ -66,30 +66,45 @@ currentPlayerView state =
         Just Tie -> div [] [ text <| "Tie"]
 
 
-agentIcons: Html Msg
-agentIcons =
-    div [ classList [("agent-icons", True)] {-onClick Decrement-} ]
-                    [ FontAwesome.Icon.viewStyled
-                          [Svg.Attributes.class "agent-icon"
-                          , Svg.Attributes.class "agent-icon-inactive"]
-                          FontAwesome.Solid.robot
-                    ,
-                        FontAwesome.Icon.viewStyled
-                            [Svg.Attributes.class "agent-icon"
-                            , Svg.Attributes.class "agent-icon-active"]
-                            FontAwesome.Solid.user ]
+agentStatusView: Model -> Piece -> Int -> Html Msg
+agentStatusView model player pieceCount =
+    let (isHuman, name) =
+            case player of
+                BlackPiece -> (model.blackAgent == HumanAgent, "Black Player")
+                WhitePiece -> (model.whiteAgent == HumanAgent, "White Player")
+    in
+    let role =
+            if isHuman then
+                "(Human)"
+            else
+                "(AI)"
+    in
+    let (humanClass, aiClass) = if isHuman then
+                         ("agent-icon-active", "agent-icon-inactive")
+                     else
+                         ("agent-icon-inactive", "agent-icon-active")
+    in
+        p [ classList [("agent", True)] ]
+            [ div [ classList [("agent-icons", True)] {-onClick Decrement-} ]
+                  [ FontAwesome.Icon.viewStyled
+                        [Svg.Attributes.class "agent-icon"
+                        , Svg.Attributes.class aiClass]
+                        FontAwesome.Solid.robot
+                  , FontAwesome.Icon.viewStyled
+                      [Svg.Attributes.class "agent-icon"
+                      , Svg.Attributes.class humanClass]
+                      FontAwesome.Solid.user ],
+                  text <| name ++ role
+                  ++ " Score: " ++ (String.fromInt pieceCount) ]
+    
 
-scoresView: GameState -> Html Msg
-scoresView state =
-    let (whiteCount, blackCount) = countPieces state.board in
+scoresView: Model -> Html Msg
+scoresView model =
+    let (whiteCount, blackCount) = countPieces model.gameState.board in
     article []
-        [
-         p [ classList [("agent", True)] ]
-             [ agentIcons,
-                text <| "White (Human) Score: " ++ (String.fromInt whiteCount) ]
-        ,p [ classList [("agent", True)] ]
-            [ agentIcons,
-                text <| "Black (Human) Score: " ++ (String.fromInt blackCount) ]
+        [ 
+          agentStatusView model BlackPiece blackCount,
+          agentStatusView model WhitePiece whiteCount
         ]
 
 
@@ -104,5 +119,5 @@ view model =
         [ h1 [] [ text "Reversi-Elm-V2" ]
         , boardView model.gameState.board movesSet
         , currentPlayerView model.gameState
-        , scoresView model.gameState
+        , scoresView model
         ]
