@@ -58,3 +58,31 @@ The board
 .black {
     background-color: black;
 }
+
+.agent {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.agent-icons {
+    height: 40px;
+    width: 80px;
+    display: flex;
+}
+
+.agent-icon {
+    margin: 5px;
+}
+
+.agent-icon-inactive {
+    color: grey;
+}
+
+.agent-icon-inactive :hover {
+    color: #ffbf66;
+}
+
+.agent-icon-active {
+    color: #08c5d1;
+}
