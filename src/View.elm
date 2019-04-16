@@ -105,7 +105,7 @@ scoresView model =
         [
           agentStatusView model BlackPiece blackCount,
           agentStatusView model WhitePiece whiteCount,
-          button [] [ text <| "Restart" ]
+          button [ onClick ResetMsg ] [ text <| "Restart" ]
         ]
 
 

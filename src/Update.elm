@@ -10,6 +10,7 @@ type alias Player = Piece
 type Msg
     = MoveMsg Move -- Player move
     | ChangeAgentMsg Player Agent -- (Change agent of a player)
+    | ResetMsg
 
 
 init : ( Model, Cmd Msg )
@@ -19,6 +20,14 @@ init =
       , blackAgent=HumanAgent
       , whiteAgent=AIAgent }
       ,  Cmd.none )
+
+reset : Model -> Model
+reset model =
+    { model
+        | gameState=initGameState
+        , potentialMoves=(allMoves initGameState)
+    }
+
 
 nextPlayer : Player -> Player
 nextPlayer player =
@@ -98,6 +107,8 @@ update msg model =
                         WhitePiece -> { model | whiteAgent=agent}
             in
                 ( tryMoveAI newModel, Cmd.none )
+        ResetMsg ->
+            (tryMoveAI (reset model), Cmd.none )
 
 {-
 Given a board, returns (whiteCount, blackCount)
