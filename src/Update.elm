@@ -51,54 +51,104 @@ isHuman player model =
 {-
 Let the board move
 -}
-move : (Int, Int) -> Model -> Model
-move (x, y) model =
-    let state = model.gameState in
-            let board = state.board
-                player = state.currentPlayer in
-            let pieceToFlip = getSandwiches (x,y) state
-                            |> List.concat in
-            let newBoard = List.foldl
-                           (\(xx, yy) b
-                                -> Grid.set (xx, yy) (Just player) b)
-                            board pieceToFlip
-                            |> Grid.set (x, y) (Just player) in
-            let newState = {board=newBoard
-                          , currentPlayer=(nextPlayer player)
-                          , winner=Nothing} in
-            let newMoves=(allMoves newState) in
-            case newMoves of
-               [] ->
-                   let flippedState = flipPlayer newState in
-                   let flippedMoves = allMoves flippedState in
-                   case flippedMoves of
-                       [] -> {model |
-                              gameState={newState | winner=Just (winner newState)}
-                            , potentialMoves=[]}
-                       _ -> {model | gameState=flippedState,
-                              potentialMoves=flippedMoves}
-               _ ->
-                    {model | gameState=newState, potentialMoves=newMoves}
+move : Move -> GameState -> GameState
+move (x, y) state =
+    let board = state.board
+        player = state.currentPlayer in
+    let pieceToFlip = getSandwiches (x,y) state
+                    |> List.concat in
+    let newBoard = List.foldl
+                   (\(xx, yy) b
+                   -> Grid.set (xx, yy) (Just player) b)
+                       board pieceToFlip
+                  |> Grid.set (x, y) (Just player) in
+    let newState = {board=newBoard
+                   , currentPlayer=(nextPlayer player)
+                   , winner=Nothing} in
+    let newMoves=(allMoves newState) in
+    case newMoves of
+        [] ->
+            let flippedState = flipPlayer newState in
+            let flippedMoves = allMoves flippedState in
+            case flippedMoves of
+                [] -> {newState | winner=Just (winner newState)}
+                _ -> flippedState
+        _ ->
+            newState
+
+normalize : (Float, Float) -> (Float, Float)
+normalize (blackScore, whiteScore) =
+    let sum = blackScore + whiteScore in
+    (blackScore / sum, whiteScore / sum)
+
+{-
+Evaluates the score of a game state, bigger is better
+-}
+evaluate : GameState -> Float
+evaluate state =
+    let (whiteCount, blackCount) = countPieces state.board in
+    let (whiteCountWeight, blackCountWeight) =
+            (0.01 * (toFloat whiteCount)
+            , 0.01 * (toFloat blackCount)) in
+    let movesCount = toFloat <| List.length (allMoves state) in
+    let (blackScore, whiteScore) =
+            case state.winner of
+                Just BlackWin -> (1 + blackCountWeight, whiteCountWeight)
+                Just WhiteWin -> (blackCountWeight, 1 + whiteCountWeight)
+                Just Tie -> (0.5 + blackCountWeight, 0.5 + whiteCountWeight)
+                Nothing -> (0.5 + blackCountWeight,
+                            0.5 + whiteCountWeight) in
+    let (nBlack, nWhite) = normalize (blackScore, whiteScore) in
+    case state.currentPlayer of
+        WhitePiece -> (nWhite^2 - nBlack^2) + movesCount / 10
+        BlackPiece -> (nBlack^2 - nWhite^2) + movesCount / 10
+
+type alias MiniMaxNode = {
+        move: Move
+       ,state: GameState
+       ,score: Float
+    }
+
+createNode : GameState -> Move -> MiniMaxNode
+createNode oldState m =
+    let newState = move m oldState in
+    let score = evaluate newState in
+    { move=m, state=newState, score=score }
+
+minimax : GameState -> Int -> GameState
+minimax state maxDepth =
+    let nextNodes =
+            List.map (\m -> createNode state m) (allMoves state) in
+    let sortedNextNodes =
+            List.sortBy .score nextNodes
+    in
+    case sortedNextNodes of
+        [] -> state
+        hd :: _ -> hd.state
 
 {-
 Let the AI move if the current player is AI, otherwise returns the current model
 -}
 tryMoveAI : Model -> Model
 tryMoveAI model =
+    let state = model.gameState in
     if (isHuman model.gameState.currentPlayer model) then
         model
     else
-        case model.potentialMoves of
-            [] -> model
-            head :: tail ->
-                let newModel = move head model in
-                tryMoveAI newModel
+        let newState = minimax state 5 in
+        tryMoveAI { model
+                      | gameState=newState
+                      , potentialMoves=(allMoves newState)}
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         MoveMsg (x,y) ->
-            let newModel = move (x, y) model in
+            let newState = move (x, y) model.gameState in
+            let newModel = { model
+                               | gameState=newState
+                               , potentialMoves=(allMoves newState) } in
             ( tryMoveAI newModel, Cmd.none )
         ChangeAgentMsg player agent ->
             let newModel =
