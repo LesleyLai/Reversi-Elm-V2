@@ -135,10 +135,13 @@ tryMoveAI model =
     if  isHuman model.gameState.currentPlayer model then
         model
     else
-        let newState = minimax state 5 in
-        tryMoveAI { model
-                      | gameState=newState
-                      , potentialMoves= allMoves newState}
+        case model.gameState.winner of
+            Nothing ->
+                let newState = minimax state 5 in
+                tryMoveAI { model
+                              | gameState=newState
+                              , potentialMoves= allMoves newState}
+            Just _ -> model
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -166,11 +169,11 @@ Given a board, returns (whiteCount, blackCount)
 countPieces : Board -> (Int, Int)
 countPieces board =
     Grid.foldl (\piece (w,b) ->
-                              case piece of
-                                  Nothing -> (w, b)
-                                  Just Black -> (w, b+1)
-                                  Just White -> (w+1, b)
-                        ) (0,0) board
+                    case piece of
+                        Nothing -> (w, b)
+                        Just Black -> (w, b+1)
+                        Just White -> (w+1, b)
+               ) (0,0) board
 
 {-
 Gets the winner of the current board configuration.
