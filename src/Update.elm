@@ -81,12 +81,26 @@ normalize (blackScore, whiteScore) =
     let sum = blackScore + whiteScore in
     (blackScore / sum, whiteScore / sum)
 
+whiteCornorScore : (Int, Int) -> Board -> Float
+whiteCornorScore pos board =
+    case Grid.get pos board of
+                Nothing -> 0.0
+                Just Nothing -> 0.0
+                Just (Just White) -> 100.0
+                Just (Just Black) -> -100.0
+
 {-
 Evaluates the score of a game state, bigger is better
 -}
 evaluate : GameState -> Float
 evaluate state =
     let (whiteCount, blackCount) = countPieces state.board in
+    let whiteCornor =
+            whiteCornorScore (0, 0) state.board
+                +  whiteCornorScore (0, 7)  state.board
+                    +  whiteCornorScore (7, 0) state.board
+                        +  whiteCornorScore (7, 7) state.board
+    in
     let (whiteCountWeight, blackCountWeight) =
             (0.01 *  toFloat whiteCount
             , 0.01 *  toFloat blackCount) in
@@ -96,35 +110,34 @@ evaluate state =
                 Just BlackWin -> (1 + blackCountWeight, whiteCountWeight)
                 Just WhiteWin -> (blackCountWeight, 1 + whiteCountWeight)
                 Just Tie -> (0.5 + blackCountWeight, 0.5 + whiteCountWeight)
-                Nothing -> (0.5 + blackCountWeight,
-                            0.5 + whiteCountWeight) in
+                Nothing -> (0.5 + blackCountWeight - whiteCornor,
+                            0.5 + whiteCountWeight + whiteCornor) in
     let (nBlack, nWhite) = normalize (blackScore, whiteScore) in
     case state.currentPlayer of
         White -> (nWhite^2 - nBlack^2) + movesCount / 10
         Black -> (nBlack^2 - nWhite^2) + movesCount / 10
 
-type alias MiniMaxNode = {
-        move: Move
-       ,state: GameState
-       ,score: Float
-    }
+minimax : Int -> Bool -> GameState -> Float
+minimax depth maximizing state =
+    if depth == 0 then
+        evaluate state
+    else
+        let newStates =
+                allMoves state
+                    |> List.map (\m -> move m state)
+        in
+        if maximizing then
+            newStates
+            |> List.map (minimax (depth - 1) False)
+            |> List.maximum
+            |> Maybe.withDefault (-1.0 / 0.0)
+        else
+            newStates
+            |> List.map (minimax (depth - 1) True)
+            |> List.minimum
+            |> Maybe.withDefault (1.0 / 0.0)
 
-createNode : GameState -> Move -> MiniMaxNode
-createNode oldState m =
-    let newState = move m oldState in
-    let score = evaluate newState in
-    { move=m, state=newState, score=score }
 
-minimax : GameState -> Int -> GameState
-minimax state maxDepth =
-    let nextNodes =
-            List.map (\m -> createNode state m) (allMoves state) in
-    let sortedNextNodes =
-            List.sortBy .score nextNodes
-    in
-    case sortedNextNodes of
-        [] -> state
-        hd :: _ -> hd.state
 
 {-
 Let the AI move if the current player is AI, otherwise returns the current model
@@ -137,10 +150,22 @@ tryMoveAI model =
     else
         case model.gameState.winner of
             Nothing ->
-                let newState = minimax state 5 in
+                let newStates =
+                         allMoves state |> List.map (\m -> move m state)
+                in
+                    let newState2 =
+                            newStates
+                                |> List.map (\newState ->
+                                                 { state = newState
+                                                 , score = minimax 2 False newState})
+                                |> List.sortBy .score
+                                |> List.map .state
+                                |> List.head
+                                |> Maybe.withDefault state
+                    in
                 tryMoveAI { model
-                              | gameState=newState
-                              , potentialMoves= allMoves newState}
+                              | gameState=newState2
+                              , potentialMoves= allMoves newState2}
             Just _ -> model
 
 
