@@ -20,9 +20,9 @@ buildState currentPlayer board  =
 intsToBoard : Grid Int -> Grid (Maybe Piece)
 intsToBoard ig =
     Grid.map (\n -> if (n == 1) then
-                        Just BlackPiece
+                        Just Black
                     else if (n == 2) then
-                        Just WhitePiece
+                        Just White
                     else Nothing) ig
 
 getMovesTest : Test
@@ -49,7 +49,7 @@ endGameTest =
                                    [1, 1, 1, 1, 1, 1, 1, 1],
                                    [1, 1, 1, 1, 1, 1, 1, 1]
                               ]) |> Maybe.map intsToBoard in
-              let state = Maybe.map (buildState BlackPiece) endBoard in
+              let state = Maybe.map (buildState Black) endBoard in
                 Expect.equal (Just BlackWin)
                     <| (Maybe.map winner state)
         , test "End the game when no move is possible" <|
@@ -64,7 +64,7 @@ endGameTest =
                                    [2, 2, 1, 1, 1, 1, 1, 1],
                                    [2, 2, 2, 2, 2, 2, 2, 0]
                               ]) |> Maybe.map intsToBoard in
-              let state = Maybe.map (buildState BlackPiece) endBoard in
+              let state = Maybe.map (buildState Black) endBoard in
                 Expect.equal (Just BlackWin)
                     <| (Maybe.map winner state)
         , test "Ties" <|
@@ -79,7 +79,7 @@ endGameTest =
                                    [2, 2, 2, 2, 2, 2, 2, 2],
                                    [2, 2, 2, 2, 2, 2, 2, 2]
                               ]) |> Maybe.map intsToBoard in
-              let state = Maybe.map (buildState BlackPiece) endBoard in
+              let state = Maybe.map (buildState Black) endBoard in
                 Expect.equal (Just Tie)
                     <| (Maybe.map winner state)
         ]

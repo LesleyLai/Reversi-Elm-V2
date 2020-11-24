@@ -22,8 +22,8 @@ cellView pos movesMap cell =
     let pieceView piece =
             div [classList [
                       ("piece", True)
-                     ,("black", piece == BlackPiece)
-                     ,("white", piece == WhitePiece)
+                     ,("black", piece == Black)
+                     ,("white", piece == White)
                      ]] [] in
     let cellAttributes =
             if Set.member pos movesMap then
@@ -58,7 +58,7 @@ currentPlayerView state =
     case state.winner of
         Nothing ->
             div [] [ text <| "Current player: " ++
-                         (if (state.currentPlayer == WhitePiece)
+                         (if (state.currentPlayer == White)
                           then "White"
                           else "Black")]
         Just BlackWin -> div [] [ text <| "Black Win"]
@@ -70,8 +70,8 @@ agentStatusView: Model -> Piece -> Int -> Html Msg
 agentStatusView model player pieceCount =
     let (isHuman, name) =
             case player of
-                BlackPiece -> (model.blackAgent == HumanAgent, "Black Player")
-                WhitePiece -> (model.whiteAgent == HumanAgent, "White Player")
+                Black -> (model.blackAgent == HumanAgent, "Black Player")
+                White -> (model.whiteAgent == HumanAgent, "White Player")
     in
     let role =
             if isHuman then
@@ -103,8 +103,8 @@ scoresView model =
     let (whiteCount, blackCount) = countPieces model.gameState.board in
     article []
         [
-          agentStatusView model BlackPiece blackCount,
-          agentStatusView model WhitePiece whiteCount,
+          agentStatusView model Black blackCount,
+          agentStatusView model White whiteCount,
           button [ onClick ResetMsg ] [ text <| "Restart" ]
         ]
 

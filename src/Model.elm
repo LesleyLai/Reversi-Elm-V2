@@ -5,7 +5,7 @@ module Model exposing (Piece(..), Agent(..), Position, Winner(..),
 import Array exposing (Array)
 import Grid exposing (Grid)
 
-type Piece = BlackPiece | WhitePiece
+type Piece = Black | White
 
 type alias Cell = Maybe Piece
 type alias Board = Grid Cell
@@ -36,15 +36,15 @@ type alias Model =
 initBoard : Board
 initBoard =
     Grid.repeat 8 8 Nothing
-        |> Grid.set (3, 3) (Just WhitePiece)
-        |> Grid.set (3, 4) (Just BlackPiece)
-        |> Grid.set (4, 3) (Just BlackPiece)
-        |> Grid.set (4, 4) (Just WhitePiece)
+        |> Grid.set (3, 3) (Just White)
+        |> Grid.set (3, 4) (Just Black)
+        |> Grid.set (4, 3) (Just Black)
+        |> Grid.set (4, 4) (Just White)
 
 initGameState: GameState
 initGameState =
       {
           board=initBoard
-        , currentPlayer=BlackPiece
+        , currentPlayer=Black
         , winner=Nothing
       }

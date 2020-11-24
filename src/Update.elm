@@ -16,7 +16,7 @@ type Msg
 init : ( Model, Cmd Msg )
 init =
     ( { gameState=initGameState
-      , potentialMoves=(allMoves initGameState)
+      , potentialMoves= allMoves initGameState
       , blackAgent=HumanAgent
       , whiteAgent=AIAgent }
       ,  Cmd.none )
@@ -25,28 +25,28 @@ reset : Model -> Model
 reset model =
     { model
         | gameState=initGameState
-        , potentialMoves=(allMoves initGameState)
+        , potentialMoves= allMoves initGameState
     }
 
 
 nextPlayer : Player -> Player
 nextPlayer player =
     case player of
-        WhitePiece -> BlackPiece
-        BlackPiece -> WhitePiece
+        White -> Black
+        Black -> White
 
 {-
 Flips the player in a game state
 -}
 flipPlayer : GameState -> GameState
 flipPlayer state =
-    {state | currentPlayer=(nextPlayer state.currentPlayer)}
+    {state | currentPlayer= nextPlayer state.currentPlayer}
 
 isHuman : Player -> Model -> Bool
 isHuman player model =
     case player of
-        WhitePiece -> model.whiteAgent == HumanAgent
-        BlackPiece -> model.blackAgent == HumanAgent
+        White -> model.whiteAgent == HumanAgent
+        Black -> model.blackAgent == HumanAgent
 
 {-
 Let the board move
@@ -63,9 +63,9 @@ move (x, y) state =
                        board pieceToFlip
                   |> Grid.set (x, y) (Just player) in
     let newState = {board=newBoard
-                   , currentPlayer=(nextPlayer player)
+                   , currentPlayer= nextPlayer player
                    , winner=Nothing} in
-    let newMoves=(allMoves newState) in
+    let newMoves= allMoves newState in
     case newMoves of
         [] ->
             let flippedState = flipPlayer newState in
@@ -88,8 +88,8 @@ evaluate : GameState -> Float
 evaluate state =
     let (whiteCount, blackCount) = countPieces state.board in
     let (whiteCountWeight, blackCountWeight) =
-            (0.01 * (toFloat whiteCount)
-            , 0.01 * (toFloat blackCount)) in
+            (0.01 *  toFloat whiteCount
+            , 0.01 *  toFloat blackCount) in
     let movesCount = toFloat <| List.length (allMoves state) in
     let (blackScore, whiteScore) =
             case state.winner of
@@ -100,8 +100,8 @@ evaluate state =
                             0.5 + whiteCountWeight) in
     let (nBlack, nWhite) = normalize (blackScore, whiteScore) in
     case state.currentPlayer of
-        WhitePiece -> (nWhite^2 - nBlack^2) + movesCount / 10
-        BlackPiece -> (nBlack^2 - nWhite^2) + movesCount / 10
+        White -> (nWhite^2 - nBlack^2) + movesCount / 10
+        Black -> (nBlack^2 - nWhite^2) + movesCount / 10
 
 type alias MiniMaxNode = {
         move: Move
@@ -132,13 +132,13 @@ Let the AI move if the current player is AI, otherwise returns the current model
 tryMoveAI : Model -> Model
 tryMoveAI model =
     let state = model.gameState in
-    if (isHuman model.gameState.currentPlayer model) then
+    if  isHuman model.gameState.currentPlayer model then
         model
     else
         let newState = minimax state 5 in
         tryMoveAI { model
                       | gameState=newState
-                      , potentialMoves=(allMoves newState)}
+                      , potentialMoves= allMoves newState}
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -148,13 +148,13 @@ update msg model =
             let newState = move (x, y) model.gameState in
             let newModel = { model
                                | gameState=newState
-                               , potentialMoves=(allMoves newState) } in
+                               , potentialMoves= allMoves newState } in
             ( tryMoveAI newModel, Cmd.none )
         ChangeAgentMsg player agent ->
             let newModel =
                     case player of
-                        BlackPiece -> { model | blackAgent=agent}
-                        WhitePiece -> { model | whiteAgent=agent}
+                        Black -> { model | blackAgent=agent}
+                        White -> { model | whiteAgent=agent}
             in
                 ( tryMoveAI newModel, Cmd.none )
         ResetMsg ->
@@ -168,8 +168,8 @@ countPieces board =
     Grid.foldl (\piece (w,b) ->
                               case piece of
                                   Nothing -> (w, b)
-                                  Just BlackPiece -> (w, b+1)
-                                  Just WhitePiece -> (w+1, b)
+                                  Just Black -> (w, b+1)
+                                  Just White -> (w+1, b)
                         ) (0,0) board
 
 {-
@@ -180,9 +180,9 @@ winner : GameState -> Winner
 winner state =
     let board = state.board in
     let (whiteCount, blackCount) = countPieces board in
-    if (whiteCount > blackCount) then
+    if  whiteCount > blackCount then
         WhiteWin
-    else if (whiteCount < blackCount) then
+    else if  whiteCount < blackCount then
         BlackWin
     else
         Tie
@@ -201,13 +201,13 @@ allMoves state =
     in
     List.range 0 (Grid.height board - 1)
         |> List.concatMap
-           (\y -> (List.range 0 (Grid.width board - 1))
+           (\y ->  List.range 0 (Grid.width board - 1)
            |> List.map (\x -> (x, y)))
            |> List.filter (\pos ->
-                               (Grid.get pos board) == Just Nothing)
+                                Grid.get pos board == Just Nothing)
            |> List.filterMap
               (\pos ->
-                   case (getSandwiches pos state) of
+                   case  getSandwiches pos state of
                        [] -> Nothing
                        _ -> Just pos
               )
@@ -218,11 +218,11 @@ getSandwich state pos dir acc =
         player = state.currentPlayer
         nextPos = addDirection pos dir
     in
-        case (Grid.get nextPos board) of
+        case  Grid.get nextPos board of
             Nothing -> [] -- Out of index
             Just Nothing -> [] -- Empty
             Just (Just piece) ->
-                if (piece == player) then
+                if  piece == player then
                     acc
                 else
                     getSandwich state nextPos dir (nextPos :: acc)
@@ -262,5 +262,5 @@ neighbors pos board =
     List.map (\dir -> addDirection pos dir) directions
         |> List.filter (\(newX, newY) ->
                             newX >= 0 && newY >= 0
-                            && newX <= (Grid.width board)
-                            && newY <= (Grid.height board))
+                            && newX <=  Grid.width board
+                            && newY <=  Grid.height board)
